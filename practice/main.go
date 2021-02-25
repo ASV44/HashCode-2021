@@ -159,23 +159,35 @@ func getDeliveryPizza(pizzas []Pizza, teamSize int) ([]Pizza, []Pizza, error) {
 		return nil, nil, errors.New("less pizzas than team members")
 	}
 
-	//var deliveryPizzas []Pizza
-	//best := 0
-	//worst := 0
-	//for i := 0; i < teamSize; i++ {
-	//	deliveryPizzas = append(deliveryPizzas, pizzas[i])
-	//	best += pizzas[i].IngredientsAmount
-	//	if worst < pizzas[i].IngredientsAmount {
-	//		worst = pizzas[i].IngredientsAmount
-	//	}
-	//}
-	//
-	//for i := teamSize; i < len(pizzas); i++ {
-	//
-	//}
+	var deliveryPizzas []Pizza
+	ingredients := make(map[string]bool)
+	for i := 0; i < teamSize; i++ {
+		deliveryPizzas = append(deliveryPizzas, pizzas[i])
+		for _, ingredient := range pizzas[i].Ingredients {
+			ingredients[ingredient] = true
+		}
+	}
 
-	deliveryPizzas := pizzas[0:teamSize]
+	for i := teamSize; i < len(pizzas); i++ {
+		newIngredients := make(map[string]bool)
+		for deliveryPizzaIndex := range deliveryPizzas {
+			calculatePizzaIgnoringOne(deliveryPizzas, deliveryPizzaIndex, newIngredients)
+		}
+	}
+
+	deliveryPizzas = pizzas[0:teamSize]
 	remainingPizzas := pizzas[teamSize:]
 
 	return deliveryPizzas, remainingPizzas, nil
+}
+
+func calculatePizzaIgnoringOne(deliveryPizzas []Pizza, skipPizzaIndex int, newIngredients map[string]bool) {
+	for pizzaIndex, pizza := range deliveryPizzas {
+		if pizzaIndex == skipPizzaIndex {
+			continue
+		}
+		for _, ingredient := range pizza.Ingredients {
+			newIngredients[ingredient] = true
+		}
+	}
 }
