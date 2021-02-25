@@ -5,20 +5,82 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
 
 func main() {
 	inputName := os.Args[1]
-	simulation, streets, carsPaths, err := readFromFile("./" + inputName + ".txt")
+	simulation, streets, _, err := readFromFile("./input_data/" + inputName + ".txt")
 	if err != nil {
 		fmt.Println("Parsing input err ", err)
 		return
 	}
 
-	fmt.Println(simulation, streets, carsPaths)
+	//fmt.Println(simulation, streets)
+
+	intersections := make(map[int][]string)
+	for _, street := range streets {
+		intersections[street.End] = append(intersections[street.End], street.Name)
+	}
+
+	sortedIntersections := sortByStreets(intersections)
+	//fmt.Println(sortedIntersections)
+
+	var result []Intersection
+	for _, intersection := range sortedIntersections {
+		if simulation.Time <= 0 {
+			break
+		}
+		streetsIntersections := make(map[string]int)
+		for _, street := range intersections[intersection.Key] {
+			if simulation.Time < 0 {
+				break
+			}
+			streetsIntersections[street] = 1
+			simulation.Time--
+		}
+		streetIntersection := Intersection{
+			Index:   intersection.Key,
+			Streets: streetsIntersections,
+		}
+
+		result = append(result, streetIntersection)
+	}
+
+	fmt.Println(len(result))
+	for _, intersection := range result {
+		fmt.Println(intersection.Index)
+		fmt.Println(len(intersection.Streets))
+		for name, time := range intersection.Streets {
+			fmt.Println(name, " ", time)
+		}
+	}
 }
+
+func sortByStreets(intersections map[int][]string) PairList {
+	pl := make(PairList, len(intersections))
+	i := 0
+	for k, v := range intersections {
+		pl[i] = Pair{k, len(v)}
+		i++
+	}
+
+	sort.Sort(sort.Reverse(pl))
+	return pl
+}
+
+type Pair struct {
+	Key   int
+	Value int
+}
+
+type PairList []Pair
+
+func (p PairList) Len() int           { return len(p) }
+func (p PairList) Less(i, j int) bool { return p[i].Value < p[j].Value }
+func (p PairList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 func readFromFile(fileName string) (Simulation, []Street, []CarPath, error) {
 	file, err := os.Open(fileName)

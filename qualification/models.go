@@ -19,3 +19,8 @@ type CarPath struct {
 	Streets int
 	Path    []string
 }
+
+type Intersection struct {
+	Index   int
+	Streets map[string]int
+}
