@@ -12,7 +12,7 @@ import (
 
 func main() {
 	inputName := os.Args[1]
-	simulation, streets, _, err := readFromFile("./input_data/" + inputName + ".txt")
+	simulation, streets, carsPaths, err := readFromFile("./input_data/" + inputName + ".txt")
 	if err != nil {
 		fmt.Println("Parsing input err ", err)
 		return
@@ -20,33 +20,54 @@ func main() {
 
 	//fmt.Println(simulation, streets)
 
+	streetCarsCapacity := make(map[string]int)
+	for _, carPath := range carsPaths {
+		for _, street := range carPath.Path {
+			streetCarsCapacity[street] += 1
+		}
+	}
+
+	//fmt.Println(streetCarsCapacity)
+
 	intersections := make(map[int][]string)
 	for _, street := range streets {
 		intersections[street.End] = append(intersections[street.End], street.Name)
 	}
 
-	sortedIntersections := sortByStreets(intersections)
+	//sortedIntersections := sortByStreets(intersections)
 	//fmt.Println(sortedIntersections)
 
 	var result []Intersection
-	for _, intersection := range sortedIntersections {
+	for key, _ := range intersections {
 		if simulation.Time <= 0 {
 			break
 		}
 		streetsIntersections := make(map[string]int)
-		for _, street := range intersections[intersection.Key] {
-			if simulation.Time < 0 {
+		for _, street := range intersections[key] {
+			if simulation.Time <= 0 {
 				break
 			}
-			streetsIntersections[street] = 1
-			simulation.Time--
+			time := 0
+			carAmount := streetCarsCapacity[street]
+			if carAmount == 0 {
+				continue
+			}
+			if carAmount > 7 {
+				time = 2
+			} else {
+				time = 1
+			}
+			streetsIntersections[street] = time
+			simulation.Time -= time
 		}
-		streetIntersection := Intersection{
-			Index:   intersection.Key,
-			Streets: streetsIntersections,
-		}
+		if len(streetsIntersections) > 0 {
+			streetIntersection := Intersection{
+				Index:   key,
+				Streets: streetsIntersections,
+			}
 
-		result = append(result, streetIntersection)
+			result = append(result, streetIntersection)
+		}
 	}
 
 	fmt.Println(len(result))
